@@ -86,7 +86,7 @@ model Stores {
   name       String
   location   String
   manager_id String      @unique
-  manager    Employees   @relation("Store_Manager", fields: [manager_id], references: [id], onDelete: Cascade)
+  manager    Employees   @relation("Store_Manager", fields: [manager_id], references: [id], onUpdate: Cascade)
   employees  Employees[] @relation("Store_Employees")
   created_at DateTime    @default(now())
   updated_at DateTime    @updatedAt
