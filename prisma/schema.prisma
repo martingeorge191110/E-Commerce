@@ -12,3 +12,110 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+enum Titles {
+  ADMIN // Admin users with full access
+  MANAGER // Managers overseeing operations
+  AUTHOR // Content creators or product authors
+  CUSTOMER_SERVICE // Customer service representatives
+  INVENTORY_MANAGER // Responsible for managing inventory
+  MARKETING_SPECIALIST // Focused on marketing strategies and campaigns
+  SALES_REPRESENTATIVE // Sales personnel interacting with customers
+  DATA_ANALYST // Analyzing sales and user data
+  DEVELOPER // Developers maintaining the website and system
+  PRODUCT_MANAGER // Managers responsible for product strategy
+  SHIPPING_MANAGER // Responsible for shipping and logistics
+  HR_MANAGER // Human resources personnel
+  ACCOUNTANT // Managing financial records
+  TECH_SUPPORT // Technical support for users and staff
+  CONTENT_EDITOR // Editors reviewing and publishing content
+  QUALITY_ASSURANCE // Ensuring product quality and compliance
+}
+
+enum Role_Permision {
+  CREATE_USER // Permission to create a new user
+  EDIT_USER // Permission to edit existing user information
+  DELETE_USER // Permission to delete a user
+  VIEW_USER // Permission to view user profiles
+  CREATE_PRODUCT // Permission to add new products
+  EDIT_PRODUCT // Permission to update existing product details
+  DELETE_PRODUCT // Permission to remove a product from the catalog
+  VIEW_PRODUCT // Permission to view product details
+  MANAGE_INVENTORY // Permission to manage inventory levels
+  VIEW_INVENTORY // Permission to view inventory reports
+  PROCESS_ORDER // Permission to manage and process customer orders
+  VIEW_ORDER // Permission to view order details and history
+  HANDLE_PAYMENT // Permission to manage payment processing
+  VIEW_PAYMENT_HISTORY // Permission to view payment transaction history
+  MANAGE_SHIPPING // Permission to manage shipping options and logistics
+  TRACK_ORDER // Permission to track the status of orders
+  VIEW_REPORTS // Permission to view sales and performance reports
+  GENERATE_REPORTS // Permission to create new reports
+  MANAGE_DISCOUNTS // Permission to create and manage discount codes
+  VIEW_PROMOTIONS // Permission to view promotional activities
+  MANAGE_SETTINGS // Permission to change application settings and configurations
+  ACCESS_ANALYTICS // Permission to access user engagement and sales analytics
+  SEND_NOTIFICATIONS // Permission to send notifications to users
+  MANAGE_ROLES // Permission to manage user roles and permissions
+  ACCESS_ADMIN_PANEL // Permission to access administrative features and dashboards
+}
+
+model Users {
+  id                 String        @id @default(uuid())
+  first_name         String
+  second_name        String
+  email              String        @unique
+  password           String
+  phone              String?       @unique @db.VarChar(150)
+  pass_code          String?
+  exp_date           DateTime?
+  avatar             String?
+  currency           String?
+  email_notification Boolean       @default(dbgenerated("(true)"))
+  sms_notification   Boolean       @default(dbgenerated("(true)"))
+  allow_send_updates Boolean       @default(dbgenerated("(false)"))
+  active             Boolean       @default(dbgenerated("(false)"))
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+  profile_completed  Boolean       @default(dbgenerated("(false)"))
+  role               Access_Roles? @relation("System_Access")
+}
+
+model Stores {
+  id         String      @id @default(uuid())
+  name       String
+  location   String
+  manager_id String      @unique
+  manager    Employees   @relation("Store_Manager", fields: [manager_id], references: [id], onDelete: Cascade)
+  employees  Employees[] @relation("Store_Employees")
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+}
+
+model Employees {
+  id             String        @id @default(uuid())
+  first_name     String
+  last_name      String
+  email          String        @unique
+  phone          String?       @unique
+  position       String?
+  hire_date      DateTime
+  store_id       String
+  store_manager  Stores?       @relation("Store_Manager")
+  role           Access_Roles? @relation("Role_Employee")
+  store_employee Stores        @relation("Store_Employees", fields: [store_id], references: [id], onDelete: Cascade)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+}
+
+model Access_Roles {
+  id          String         @id @default(uuid())
+  role        Titles
+  description String         @db.LongText
+  permissions Role_Permision
+  user_id     String         @unique
+  user        Users          @relation("System_Access", fields: [user_id], references: [id], onDelete: Cascade)
+  employee    Employees      @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+}
