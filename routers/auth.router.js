@@ -1,6 +1,6 @@
 import express from 'express';
-import AuthValidator from '../utilies_validators/auth.validator.js';
 import AuthController from '../controllers/auth.controller.js';
+
 
 /**
  * Authintication For:
@@ -16,25 +16,29 @@ const authObject = new AuthController()
 AuthRouter.route("/register").post(
 		authObject.registerValid(),
 		authObject.validationError,
-		authObject.register
+		authObject.registerController
 	)
 
 
 
 /* Login api process */
-AuthRouter.route("/login").post()
+AuthRouter.route("/login").post(
+	authObject.logInValid(),
+	authObject.validationError,
+	authObject.logInController
+)
 
 /**
  * Reset Password api process
  *
  * Methods:
  * POST: Send a new code for user and set exp data
- * GET: send mail with this gen code and exp date
- * PUT: compare code, then update password to new one
+ * PATCH: compare code and exp date, then delete it from DB
+ * PUT: Reset password
  */
-AuthRouter.route("/reset-passwrod")
-                                    .post()
-                                    .get()
-                                    .put()
+AuthRouter.route("/reset-passwrod/")
+                                    .post(authObject.sendCodeValid(), authObject.validationError, authObject.sendCodeController)
+                                    .patch(authObject.checkCodeValid(), authObject.validationError, authObject.checkCodeController)
+                                    .put(authObject.resetPassValid(), authObject.validationError, authObject.resetPassController)
 
 export default AuthRouter;

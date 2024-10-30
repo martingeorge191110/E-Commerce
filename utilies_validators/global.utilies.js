@@ -1,4 +1,4 @@
-
+import nodemailer from 'nodemailer'
 
 /**
  * Response Class
@@ -27,6 +27,32 @@ class GlobalUtilies {
       });
 
       return (itemsSelected)
+   }
+
+   /* Send mail Via Gmail */
+   sendMail = async (userEmail, subject, htmlCode) => {
+      const transporter = nodemailer.createTransport({
+         service: "gmail",
+         auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_PASS
+         }
+      })
+   
+      const mail = {
+         from: process.env.GMAIL_USER,
+         to: userEmail,
+         subject: subject,
+         html: htmlCode,
+      }
+   
+      try {
+         await transporter.sendMail(mail)
+   
+         return (true)
+      } catch (err) {
+         return (false)
+      }
    }
 }
 

@@ -35,6 +35,10 @@ class AuthUtilies extends GlobalUtilies {
       })
    }
 
+   /* Function to comparing pass with hashed one */
+   comparingPasswords = (password, hashedPass) => {
+      return (bcrypt.compareSync(password, hashedPass))
+   }
 }
 
 export default AuthUtilies;
