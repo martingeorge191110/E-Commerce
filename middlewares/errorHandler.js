@@ -6,20 +6,21 @@
  */
 
 class ApiError extends Error{
-   constructor (statusCode, message) {
-      super(message)
+   constructor (statusCode, errors) {
+      super()
       this.statusCode = statusCode
+      this.errors = errors
       this.stack = process.env.NODE_ENV === "development" ? this.stack : null
       this.status = statusCode >= 400 && statusCode <= 500 ? "Failuire" : "Error"
    }
 
    /* Function to create errors */
-   createError (statusCode, message) {
-      return (new ErrorHandling(statusCode, message))
+   static createError (statusCode, errors) {
+      return (new ApiError(statusCode, errors))
    }
 
    /* Function to catch errors */
-   catchError = (process) => {
+   static catchError = (process) => {
       const message = `Something wnet wrong within ${process} process!`
       return (this.createError(500, message))
    }
@@ -28,7 +29,7 @@ class ApiError extends Error{
    static responseError = (err, req, res, next) => {
       return (res.status(err.statusCode).json({
          success: false,
-         message: err.message,
+         errors: err.errors,
          status: err.status,
          stack: err.stack
       }))
