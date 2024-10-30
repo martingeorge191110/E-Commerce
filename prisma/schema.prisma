@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -60,25 +54,37 @@ enum Role_Permision {
   ACCESS_ADMIN_PANEL // Permission to access administrative features and dashboards
 }
 
-model Users {
-  id                 String        @id @default(uuid())
+enum Employement_Types {
+  FULLTIME
+  PARTTIME
+  CONTRACT
+  INTERN
+}
+
+enum Employment_Statuses {
+  ACTRIVE
+  ONLEAVE
+  TERMINATED
+}
+
+model Customers {
+  id                 String    @id @default(uuid())
   first_name         String
   second_name        String
-  email              String        @unique
+  email              String    @unique
   password           String
-  phone              String?       @unique @db.VarChar(150)
+  phone              String?   @unique @db.VarChar(150)
   pass_code          String?
   exp_date           DateTime?
   avatar             String?
   currency           String?
-  email_notification Boolean       @default(dbgenerated("(true)"))
-  sms_notification   Boolean       @default(dbgenerated("(true)"))
-  allow_send_updates Boolean       @default(dbgenerated("(false)"))
-  active             Boolean       @default(dbgenerated("(false)"))
-  created_at         DateTime      @default(now())
-  updated_at         DateTime      @updatedAt
-  profile_completed  Boolean       @default(dbgenerated("(false)"))
-  role               Access_Roles? @relation("System_Access")
+  email_notification Boolean   @default(dbgenerated("(true)"))
+  sms_notification   Boolean   @default(dbgenerated("(true)"))
+  allow_send_updates Boolean   @default(dbgenerated("(false)"))
+  active             Boolean   @default(dbgenerated("(false)"))
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  profile_completed  Boolean   @default(dbgenerated("(false)"))
 }
 
 model Stores {
@@ -93,28 +99,34 @@ model Stores {
 }
 
 model Employees {
-  id             String        @id @default(uuid())
-  first_name     String
-  last_name      String
-  email          String        @unique
-  phone          String?       @unique
-  position       String?
-  hire_date      DateTime
-  store_id       String
-  store_manager  Stores?       @relation("Store_Manager")
-  role           Access_Roles? @relation("Role_Employee")
-  store_employee Stores        @relation("Store_Employees", fields: [store_id], references: [id], onDelete: Cascade)
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+  id                String              @id @default(uuid())
+  first_name        String
+  last_name         String
+  email             String              @unique
+  phone             String?             @unique
+  age               Int
+  position          String?
+  salary            Float
+  hire_date         DateTime            @default(now())
+  employment_type   Employement_Types
+  employment_status Employment_Statuses
+  current_rate      Float               @default(0)
+  store_id          String
+  store_manager     Stores?             @relation("Store_Manager")
+  role              Access_Roles?       @relation("Role_Employee")
+  store_employee    Stores              @relation("Store_Employees", fields: [store_id], references: [id], onDelete: Cascade)
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
 }
 
 model Access_Roles {
   id          String         @id @default(uuid())
   role        Titles
+  sign_in_email String @unique
+  password String
   description String         @db.LongText
   permissions Role_Permision
   user_id     String         @unique
-  user        Users          @relation("System_Access", fields: [user_id], references: [id], onDelete: Cascade)
   employee    Employees      @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
   created_at  DateTime       @default(now())
   updated_at  DateTime       @updatedAt
