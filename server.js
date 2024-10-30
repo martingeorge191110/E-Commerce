@@ -4,6 +4,8 @@ import dotenv from "dotenv"
 import cors from "cors"
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import ApiError from './middlewares/errorHandler.js';
+import AuthRouter from './routers/auth.router.js';
 
 dotenv.config()
 
@@ -29,8 +31,10 @@ app.use(express.urlencoded({
 
 /* All Server Routers */
 
+app.use("/api/auth", AuthRouter)
 
 
+app.use("*", ApiError.responseError)
 /* End of server Routers */
 
 const server = http.createServer(app)
