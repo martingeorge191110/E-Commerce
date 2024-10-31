@@ -67,6 +67,48 @@ enum Employment_Statuses {
   TERMINATED
 }
 
+enum Categories {
+  ELECTRONICS // e.g., phones, computers, cameras
+  FASHION // e.g., clothing, accessories
+  HOME_AND_KITCHEN // e.g., furniture, appliances, kitchenware
+  SPORTS_AND_OUTDOORS // e.g., fitness equipment, camping gear
+  BEAUTY_AND_HEALTH // e.g., skincare, supplements, fitness products
+  TOYS_AND_GAMES // e.g., children’s toys, video games
+  AUTOMOTIVE // e.g., car accessories, tools
+  BOOKS // e.g., novels, textbooks
+  GROCERIES // e.g., food, beverages
+  PET_SUPPLIES // e.g., pet food, toys, grooming supplies
+  OFFICE_SUPPLIES // e.g., stationery, office furniture
+  MUSIC_AND_INSTRUMENTS // e.g., instruments, music accessories
+  JEWELRY // e.g., rings, necklaces, watches
+  GARDEN_AND_OUTDOOR // e.g., gardening tools, outdoor furniture
+}
+
+enum Companies {
+  APPLE // Electronics
+  NIKE // Fashion
+  SAMSUNG // Electronics, Fashion
+  IKEA // Home and Kitchen
+  ADIDAS // Fashion, Sports and Outdoors
+  WHIRLPOOL // Home and Kitchen
+  HASBRO // Toys and Games
+  MATTEL // Toys and Games
+  PETCO // Pet Supplies
+  GNC // Beauty and Health
+  AMAZON // Electronics, Fashion, Home and Kitchen, Books, Groceries
+  COSTCO // Groceries, Home and Kitchen
+  WALMART // Electronics, Fashion, Home and Kitchen, Groceries
+  OFFICE_DEPOT // Office Supplies
+  STAPLES // Office Supplies
+  ZARA // Fashion
+  SONY // Electronics, Music and Instruments
+  FENDER // Music and Instruments
+  BOSTON_ACCENT // Music and Instruments
+  BLACK_AND_DECKER // Automotive, Home and Kitchen
+  HUNTER // Sports and Outdoors
+  BOSCH // Automotive, Home and Kitchen
+}
+
 model Customers {
   id                 String    @id @default(uuid())
   first_name         String
@@ -96,6 +138,7 @@ model Stores {
   employees  Employees[] @relation("Store_Employees")
   created_at DateTime    @default(now())
   updated_at DateTime    @updatedAt
+  stock      Stock[]
 }
 
 model Employees {
@@ -132,4 +175,29 @@ model Access_Roles {
   employee      Employees      @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
   created_at    DateTime       @default(now())
   updated_at    DateTime       @updatedAt
+}
+
+model Products {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  category    Categories
+  company     Companies
+  quantity    Int
+  price       Float
+  isAvailable Boolean    @default(dbgenerated("(true)"))
+  shippedDate DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  Stock       Stock[]
+}
+
+model Stock {
+  storeId            String
+  productId          String
+  quantity           Int
+  shippedToStoreDate DateTime @default(now())
+  store              Stores   @relation(fields: [storeId], references: [id], onUpdate: Cascade)
+  product            Products @relation(fields: [productId], references: [id], onUpdate: Cascade)
+
+  @@unique([storeId, productId])
 }
