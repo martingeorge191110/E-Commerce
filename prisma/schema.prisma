@@ -120,14 +120,16 @@ model Employees {
 }
 
 model Access_Roles {
-  id          String         @id @default(uuid())
-  role        Titles
-  sign_in_email String @unique
-  password String
-  description String         @db.LongText
-  permissions Role_Permision
-  user_id     String         @unique
-  employee    Employees      @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
-  created_at  DateTime       @default(now())
-  updated_at  DateTime       @updatedAt
+  id            String         @id @default(uuid())
+  role          Titles
+  sign_in_email String         @unique
+  password      String
+  pass_code     String?
+  exp_date      DateTime?
+  description   String         @db.LongText
+  permissions   Role_Permision
+  user_id       String         @unique
+  employee      Employees      @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
 }

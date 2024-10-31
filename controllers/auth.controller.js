@@ -96,24 +96,10 @@ class AuthController extends AuthValidator {
       const {email} = req.body
       const {status} = req.query
 
-      const code = String(Math.random()).slice(3,9)
-      const expDate = new Date(Date.now() + 5 * 60 * 1000);
-      let user
-      try {
-         user = await PrismaObject.customers.update({
-            where: {email},
-            data: {
-               pass_code: code,
-               exp_date: expDate
-            }
-         })
+      if (req.userError)
+         return (next(ApiError.catchError("(server error during updating pass_code)")))
 
-         if (!user)
-            return (next(ApiError.createError(404, "User not found, please Register at first!")))
-
-      } catch (err) {
-         return (next(ApiError.catchError("sending generated code")))
-      }
+      const user = req.user
 
       let codeVia;
       try {
@@ -124,15 +110,15 @@ class AuthController extends AuthValidator {
             `
                <h1>Password Reset</h1>
                <p>Generated Code</p>
-               <h2>${code}</h2>
-               <h3>expire date${expDate}</h3>
+               <h2>${user.pass_code}</h2>
+               <h3>expire date${user.exp_date}</h3>
             `
             )
 
          if (!codeVia)
             return (next(ApiError.createError(409, "Click on send Code again, to send to your mail!")))
+
       } catch (err) {
-         console.log(err)
          return (next(ApiError.createError(409, "Click on send Code again, to send to your mail!")))
       }
 
@@ -149,16 +135,12 @@ class AuthController extends AuthValidator {
    checkCodeController = async (req, res, next) => {
       const {email, code} = req.body
 
-      const currentDate = new Date(Date.now() + 1 * 60 * 1000)
-      let user;
-      try {
-         user = await PrismaObject.customers.findUnique({
-            where: {email}
-         })
+      if (req.userError)
+         return (next(ApiError.catchError("(server errror during getting pass code form database)")))
 
-      } catch (err) {
-         return (next(ApiError.catchError("get user code from data base!")))
-      }
+      const currentDate = new Date(Date.now() + 1 * 60 * 1000)
+      const user = req.user
+
       const cmpDate = user.exp_date > currentDate ? true : false
       if (!cmpDate)
          return (next(ApiError.createError(409, "Code expired, Please request a new code!")))
@@ -168,12 +150,19 @@ class AuthController extends AuthValidator {
          return (next(ApiError.createError(400, "Generated code is wrong!")))
 
       try {
-         user = await PrismaObject.customers.update({
-            where: {email},
-            data: {pass_code: null, exp_date: null}
-         })
+         if (req.query.role === "customer") {
+            await PrismaObject.customers.update({
+               where: {email: req.body.email},
+               data: {pass_code: null, exp_date: null}
+            })
+         } else {
+            await PrismaObject.access_Roles.update({
+               where: {sign_in_email: req.body.email},
+               data: {pass_code: null, exp_date: null}
+            })
+         }
       } catch (err) {
-         return (next(ApiError.catchError("Remove code from data base")))
+         return (next(ApiError.catchError("(server error during deleting pass_code from data base)")))
       }
 
       return (this.responseJsonDone(res, 200, "Succesfuly!", {email: email}))
@@ -188,15 +177,26 @@ class AuthController extends AuthValidator {
     */
    resetPassController = async (req, res, next) => {
       const {email, password} = req.body
+      const {role} = req.query
 
       const newPassword = this.hashingPassword(password)
+
       try {
-         const updateUser = await PrismaObject.customers.update({
-            where: {email},
-            data: {
-               password: newPassword
-            }
-         })
+         if (role === "customer") {
+            await PrismaObject.customers.update({
+               where: {email},
+               data: {
+                  password: newPassword
+               }
+            })
+         } else {
+            await PrismaObject.access_Roles.update({
+               where: {sign_in_email: email},
+               data: {
+                  password: newPassword
+               }
+            })
+         }
 
       } catch (err) {
          return (next(ApiError.catchError("reset password")))

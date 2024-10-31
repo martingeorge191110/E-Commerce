@@ -32,7 +32,7 @@ AuthRouter.route("/login").post(
  * Reset Password api process
  *
  * Methods:
- * POST: Send a new code for user and set exp data
+ * POST: Send a new code for user and set exp data (query contains: (status: (mail, sms), role: ("customer", "employee")))
  * PATCH: compare code and exp date, then delete it from DB
  * PUT: Reset password
  */
