@@ -163,41 +163,54 @@ model Employees {
 }
 
 model Access_Roles {
-  id            String         @id @default(uuid())
+  id            String       @id @default(uuid())
   role          Titles
-  sign_in_email String         @unique
+  sign_in_email String       @unique
   password      String
   pass_code     String?
   exp_date      DateTime?
-  description   String         @db.LongText
-  permissions   Role_Permision
-  user_id       String         @unique
-  employee      Employees      @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
-  created_at    DateTime       @default(now())
-  updated_at    DateTime       @updatedAt
+  description   String       @db.LongText
+  permissions   Permission[]
+  user_id       String       @unique
+  employee      Employees    @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  Products      Products[]   @relation("Added_Product")
+}
+
+model Permission {
+  employee_id String
+  permission  Role_Permision
+  emplyee     Access_Roles   @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@unique([employee_id, permission])
 }
 
 model Products {
-  id          String     @id @default(uuid())
-  name        String
-  description String?
-  category    Categories
-  company     Companies
-  quantity    Int
-  price       Float
-  isAvailable Boolean    @default(dbgenerated("(true)"))
-  shippedDate DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  Stock       Stock[]
+  id            String       @id @default(uuid())
+  name          String
+  description   String?
+  category      Categories
+  company       Companies
+  quantity      Int
+  price         Float
+  cost_per_unit Float
+  all_cost      Float
+  is_available  Boolean      @default(dbgenerated("(true)"))
+  shipped_date  DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  employee_id   String
+  employee      Access_Roles @relation("Added_Product", fields: [employee_id], references: [id])
+  Stock         Stock[]
 }
 
 model Stock {
-  storeId            String
-  productId          String
-  quantity           Int
-  shippedToStoreDate DateTime @default(now())
-  store              Stores   @relation(fields: [storeId], references: [id], onUpdate: Cascade)
-  product            Products @relation(fields: [productId], references: [id], onUpdate: Cascade)
+  store_id              String
+  product_id            String
+  quantity              Int
+  shipped_to_store_date DateTime @default(now())
+  store                 Stores   @relation(fields: [store_id], references: [id], onUpdate: Cascade)
+  product               Products @relation(fields: [product_id], references: [id], onUpdate: Cascade)
 
-  @@unique([storeId, productId])
+  @@unique([store_id, product_id])
 }

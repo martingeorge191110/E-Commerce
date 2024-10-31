@@ -43,7 +43,7 @@ class AuthController extends AuthValidator {
          return (next(ApiError.catchError("registering")))
       }
 
-      const token = this.createToken(null, result.id)
+      const token = this.createToken(null, null, result.id)
       this.setNewCookie(res, token)
 
       result.token = token
@@ -78,7 +78,7 @@ class AuthController extends AuthValidator {
          return (next(ApiError.catchError("login")))
       }
 
-      const token = this.createToken(null, result.id)
+      const token = this.createToken(null, null, result.id)
       this.setNewCookie(res, token)
 
       result.token = token

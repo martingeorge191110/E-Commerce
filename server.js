@@ -6,6 +6,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import ApiError from './middlewares/errorHandler.js';
 import AuthRouter from './routers/auth.router.js';
+import ProductsRouter from './routers/products.router.js';
 
 dotenv.config()
 
@@ -31,8 +32,11 @@ app.use(express.urlencoded({
 
 /* All Server Routers */
 
+/* Auth Router for all people using comp web or system */
 app.use("/api/auth", AuthRouter)
 
+/* Products Managment Router */
+app.use("/api/prdoucts", ProductsRouter)
 
 app.use("*", ApiError.responseError)
 /* End of server Routers */

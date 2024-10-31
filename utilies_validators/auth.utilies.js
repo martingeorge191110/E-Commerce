@@ -11,11 +11,12 @@ class AuthUtilies extends GlobalUtilies {
    }
 
    /* Function that creating token based on role*/
-   createToken = (role, id) => {
+   createToken = (role, permissions, id) => {
       let signObject = {id: id}
 
       if (role) {
          signObject.role = role
+         signObject.permissions = permissions
       }
       const token = jwt.sign(signObject, process.env.JWT_KEY, {
          expiresIn: process.env.JWT_EXP
