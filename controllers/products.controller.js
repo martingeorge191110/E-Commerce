@@ -74,7 +74,7 @@ class ProductsController extends ProductsValidator{
    }
 
    /**
-    * Controller to View products details for Employees
+    * Controller to Update products details (Auth who has the access)
     * 
     * Description:
     *             [1] --> get the body and product inf
@@ -93,6 +93,26 @@ class ProductsController extends ProductsValidator{
          this.responseJsonDone(res, 200, "Updated succesfuly!", updateProduct)
       } catch (err) {
          return (next(ApiError.catchError("updating Product")))
+      }
+   }
+
+   /**
+    * Controller to Update products details (Auth who has the access)
+    * 
+    * Description:
+    *             [1] --> get product id and remove it from the DB
+    */
+   deleteProductController = async (req, res, next) => {
+      const {productId} = req.query
+
+      try {
+         await PrismaObject.products.delete({
+            where: {id: productId}
+         })
+
+         this.responseJsonDone(res, 200, "Product Deleted succesfuly From DB!", null)
+      } catch (err) {
+         return (ApiError.catchError("deleting product stock from data base"))
       }
    }
 }

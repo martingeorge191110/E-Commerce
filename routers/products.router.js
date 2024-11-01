@@ -29,6 +29,10 @@ ProductsRouter.route("/")
                            productsInstance.employeeAuthValid, productsInstance.productIdValid(),
                            productsInstance.optionalValid(), productsInstance.updateProductController
                         )
+                        .delete(
+                           productsInstance.employeeAuthValid, productsInstance.productIdValid()
+                           , productsInstance.deleteProductController
+                        )
 
 
 
