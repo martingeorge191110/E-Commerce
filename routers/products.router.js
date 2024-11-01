@@ -12,10 +12,23 @@ const productsInstance = new ProductsController()
    } */
 ProductsRouter.use(verify_token)
 
-/*  */
+/* Route for manipulate Products:
+   USAGE:
+         POST: --> employees have the licence to add new products 
+         */
 ProductsRouter.route("/")
-                        .post(productsInstance.employeeAuthValid, productsInstance.addOneValid(), productsInstance.validationError, productsInstance.addProductsController)
-
+                        .post(
+                           productsInstance.employeeAuthValid, productsInstance.addOneValid(),
+                           productsInstance.addProductsController
+                        )
+                        .get(
+                           productsInstance.optionalValid(), productsInstance.validationError,
+                           productsInstance.employeeViewController
+                        )
+                        .put(
+                           productsInstance.employeeAuthValid, productsInstance.productIdValid(),
+                           productsInstance.optionalValid(), productsInstance.updateProductController
+                        )
 
 
 

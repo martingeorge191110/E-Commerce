@@ -1,6 +1,7 @@
-import { body } from "express-validator";
+import { body, validationResult, query } from "express-validator";
 import GlobalUtilies from "./global.utilies.js";
 import ApiError from "../middlewares/errorHandler.js";
+import PrismaObject from "../prisma/prisma.js";
 
 
 
@@ -40,11 +41,57 @@ class ProductsValidator extends GlobalUtilies{
       ])
    }
 
+   /* Function that return
+      array of express validator to check
+      the validation of (category and company) */
+   optionalValid = () => {
+      const numberFields = ["quantity", "price", "cost_per_unit"]
+      return ([
+         query("company")
+            .optional()
+            .isString().withMessage("Company must be as string")
+            .custom((value, {req}) => {
+               req.newQuery = {...req.query, company: value.toUpperCase(), category: req.query.category.toUpperCase()}
+               return (true)
+            }),
+         ...numberFields.map((field) => {
+            return query(field)
+               .optional()
+               .custom((value, {req}) => {
+                  req.newQuery = {...req.newQuery, [`${field}`]: Number(value)}
+                  return (true)
+               })
+         })
+      ])
+   }
+
+   /* Function just validate whether query contains
+      product id or not */
+   productIdValid = () => {
+      return ([
+         query("productId")
+            .notEmpty().withMessage("query must include product id field")
+            .isString().withMessage("product id must be string")
+            .custom(async (value, {req, res, next}) => {
+               try {
+                  const product = await PrismaObject.products.findUnique({
+                     where: {id: value}
+                  })
+                  if (!product)
+                     throw (ApiError.createError(404, "No product information with this id"))
+                  req.product = product
+               } catch (err) {
+                  throw (new Error("Server error during searching about the productId"))
+               }
+            })
+      ])
+   }
+
    /* Function middleware to determine whether
    this user authorized for dealing with
    manipulating products or not */
    employeeAuthValid = (req, res, next) => {
-      const { user } = req.user
+      const user = req.user
 
       const permissions = user.permissions
       for (let i = 0; i < permissions.length; i++) {
@@ -52,8 +99,9 @@ class ProductsValidator extends GlobalUtilies{
             return (next())
          }
       }
+      const error = ApiError.createError(403, "You are not Authorized!")
       return (ApiError.responseError(
-         ApiError.createError(403, "You are not Authorized!"), req, res, next
+         error, req, res, next
       ))
    }
 
