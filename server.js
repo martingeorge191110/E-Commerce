@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import ApiError from './middlewares/errorHandler.js';
 import AuthRouter from './routers/auth.router.js';
 import ProductsRouter from './routers/products.router.js';
+import AccessRoleRouter from './routers/accessroles.router.js';
 
 dotenv.config()
 
@@ -34,6 +35,9 @@ app.use(express.urlencoded({
 
 /* Auth Router for all people using comp web or system */
 app.use("/api/auth", AuthRouter)
+
+/* Access Roles Router */
+app.use("/api/permission", AccessRoleRouter)
 
 /* Products Managment Router */
 app.use("/api/prdoucts", ProductsRouter)

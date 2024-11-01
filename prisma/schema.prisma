@@ -154,10 +154,10 @@ model Employees {
   employment_type   Employement_Types
   employment_status Employment_Statuses
   current_rate      Float               @default(0)
-  store_id          String
+  store_id          String?
   store_manager     Stores?             @relation("Store_Manager")
   role              Access_Roles?       @relation("Role_Employee")
-  store_employee    Stores              @relation("Store_Employees", fields: [store_id], references: [id], onDelete: Cascade)
+  store_employee    Stores?             @relation("Store_Employees", fields: [store_id], references: [id], onDelete: Cascade)
   created_at        DateTime            @default(now())
   updated_at        DateTime            @updatedAt
 }
@@ -172,7 +172,7 @@ model Access_Roles {
   description   String       @db.LongText
   permissions   Permission[]
   user_id       String       @unique
-  employee      Employees    @relation("Role_Employee", fields: [id], references: [id], onDelete: Cascade)
+  employee      Employees    @relation("Role_Employee", fields: [user_id], references: [id], onDelete: Cascade)
   created_at    DateTime     @default(now())
   updated_at    DateTime     @updatedAt
   Products      Products[]   @relation("Added_Product")
