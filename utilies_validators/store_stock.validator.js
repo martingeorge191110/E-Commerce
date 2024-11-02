@@ -122,6 +122,110 @@ class Store_StockValidator extends GlobalUtilies {
       ])
    }
 
+   /* function that return
+      array of express validator to check
+      the validation of store id and products id for creating new stock */
+   shippingStockValid = () => {
+      const fileds = ["store_id", "product_id"]
+      return ([
+         ...fileds.map((field) => {
+            return (
+               body(field)
+                  .notEmpty().withMessage(`${field} is required`)
+                  .isString().withMessage(`${field} must bew string`)
+                  .custom( async (value, {req}) => {
+                     try {
+                        if (field === "store_id") {
+                           const store = await PrismaObject.stores.findUnique({
+                              where: {id: value}
+                           })
+                           if (!store)
+                              throw (new Error("We dont have any records with this IDs"))
+                           req.store = store
+                        } else {
+                           const product = await PrismaObject.products.findUnique({
+                              where: {id: value},
+                              include: {
+                                 Stock: true
+                              }
+                           })
+                           let availableAmount = product.quantity
+                           product.Stock.forEach((ele) => {
+                              availableAmount = availableAmount - ele.quantity
+                           })
+                           if (!product)
+                              throw (new Error("We dont have any records with this IDs"))
+                           if (Number(req.body.quantity) && availableAmount < Number(req.body.quantity))
+                              throw (new Error(`Value you want to shipping is to big, current value of the product is ${availableAmount}`))
+                           req.product = product
+                        }
+                     } catch (err) {
+                        throw (err)
+                     }
+                  })
+            )
+         }),
+         body("quantity")
+         .notEmpty().withMessage("quantity field is required!")
+         .isNumeric().withMessage("quantity must be a numeric value!")
+      ])
+   }
+
+   /* function that return
+      array of express validator to check
+      the validation of home id, and also store id, and quantity  */
+   sendStockValid = () => {
+      const fileds = ["home_id", "receiver_id", "product_id"]
+      return ([
+         ...fileds.map((field) => {
+            return (
+               body(field)
+                  .notEmpty().withMessage(`${field} is required`)
+                  .isString().withMessage(`${field} must be a string`)
+                  .custom( async (value, {req}) => {
+                     try {
+                        if (field === "home_id") {
+                           const store = await PrismaObject.stores.findUnique({
+                              where: {id: value}
+                           })
+                           if (!store)
+                              throw (new Error("We dont have any records with this IDs"))
+                           req.homeStore = store
+                        } else if (field === "receiver_id") {
+                           const store = await PrismaObject.stores.findUnique({
+                              where: {id: value}
+                           })
+                           req.receiverStore = store
+                        } else {
+                           const stock = await PrismaObject.stock.findUnique({
+                              where: {store_id_product_id: {
+                                 store_id: req.body.home_id,
+                                 product_id: value
+                              }}
+                           })
+
+                           if (!stock)
+                              throw (new Error("No stock with this information in our store"))
+
+                           let availableAmount = stock.quantity
+                           if (availableAmount < Number(req.body.quantity))
+                              throw (new Error(`our amount is just ${availableAmount}, your desired amount is too big!`))
+
+                           req.product_id = value
+                           req.stock = stock
+                        }
+                     } catch (err) {
+                        throw (err)
+                     }
+                  })
+            )
+         }),
+         body("quantity")
+            .notEmpty().withMessage("quantity field is required!")
+            .isNumeric().withMessage("quantity must be a numeric value!")
+      ])
+   }
+
    /* Function that validate the
       authorized Employees to do actions with stores*/
    storeEmpAuthorized = (req, res, next) => {
@@ -137,6 +241,23 @@ class Store_StockValidator extends GlobalUtilies {
             ApiError.createError(404, "Unauthroized to manipulate with stores information"), req, res, next
          )
       )
+   }
+
+   /* Function that validate the
+      authorized Employees to do actions with Stocks */
+   stockEmpAuthorized = (req, res, next) => {
+      const user = req.user
+      const authTitles = ["ADMIN", "MANAGER", "INVENTORY_MANAGER", "SHIPPING_MANAGER"]
+      const authPermissions = ["ACCESS_ADMIN_PANEL", "CREATE_PRODUCT", "MANAGE_INVENTORY"]
+      const permAccess = authPermissions.some((permission) => {
+         return (user.permissions.includes(permission) ? true : false)
+      })
+      if (authTitles.includes(user.role) && permAccess)
+         return (next())
+
+      return (ApiError.responseError(
+         ApiError.createError(403, "You are not authorized to do this action"), req, res, next
+      ))
    }
 
    /* Function Middleware to chech the request

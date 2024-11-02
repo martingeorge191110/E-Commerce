@@ -119,6 +119,111 @@ class Store_StockController extends Store_StockValidator{
          return (next(ApiError.createError(500, "Server error during the operation!")))
       }
    }
+
+   /**
+    * Controller to shipping new stock
+    * 
+    * Description:
+    *             [1] --> after validation check whether the stock is exist or not
+    *             [2] --> updated or create a new stock based on the condition, then resposne
+    */
+   shippingStockController = async (req, res, next) => {
+      const store = req.store
+      const product = req.product
+      const {quantity} = req.body
+      let stock;
+
+      try {
+         stock = await PrismaObject.stock.findUnique({
+            where: {store_id_product_id: {
+               store_id: store.id,
+               product_id: product.id
+            }}
+         })
+         if (stock)
+            stock = await PrismaObject.stock.update({
+               where: {
+                  store_id_product_id: {
+                     store_id: store.id, product_id: product.id
+                  }
+               }, data: {
+                  quantity: {
+                     increment: quantity
+                  }
+               }
+            })
+         else
+            stock = await PrismaObject.stock.create({
+               data: {
+                  store_id: store.id, product_id: product.id, quantity
+               }, include: {
+                  product: true,
+                  store: true
+               }
+            })
+
+         return (this.responseJsonDone(res, 200, "New stock has been created!", stock))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during adding the stock!")))
+      }
+   }
+
+   /**
+    * 
+    */
+   sendStockController = async (req, res, next) => {
+      const home = req.homeStore
+      const receiver = req.receiverStore
+      const stock = req.stock
+      const product_id = req.product_id
+      const {quantity} = req.body
+      let stockToAnother
+
+      try {
+         stockToAnother = await PrismaObject.stock.findUnique({
+            where: {
+               store_id_product_id: {
+                  store_id: receiver, product_id
+               }
+            }
+         })
+         if (stockToAnother) {
+            stockToAnother = await PrismaObject.stock.update({
+               where: {
+                  store_id_product_id: {
+                     store_id: store.id, product_id: product.id
+                  }
+               }, data: {
+                  quantity: {
+                     increment: quantity
+                  }
+               }, include: {
+                  product: true, store: true
+               }
+            })
+         } else {
+            stockToAnother = await PrismaObject.stock.create({
+               data: {
+                  store_id: receiver.id, product_id, quantity
+               }, include: {
+                  product: true,
+                  store: true
+               }
+            })
+         }
+         await PrismaObject.stock.update({
+            where: {
+               store_id_product_id: {
+                  store_id: home.id, product_id
+               }
+            }, data: {
+               quantity: {decrement: quantity}
+            }
+         })
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during sending stock")))
+      }
+   }
 }
 
 export default Store_StockController;

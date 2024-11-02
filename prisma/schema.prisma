@@ -109,6 +109,19 @@ enum Companies {
   BOSCH // Automotive, Home and Kitchen
 }
 
+enum Notification_Type {
+  MESSAGE
+  ALERT
+  REMINDER
+}
+
+enum Notification_Status {
+  PENDING
+  SENT
+  READ
+}
+
+
 model Customers {
   id                 String    @id @default(uuid())
   first_name         String
@@ -163,19 +176,21 @@ model Employees {
 }
 
 model Access_Roles {
-  id            String       @id @default(uuid())
-  role          Titles
-  sign_in_email String       @unique
-  password      String
-  pass_code     String?
-  exp_date      DateTime?
-  description   String       @db.LongText
-  permissions   Permission[]
-  user_id       String       @unique
-  employee      Employees    @relation("Role_Employee", fields: [user_id], references: [id], onDelete: Cascade)
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
-  Products      Products[]   @relation("Added_Product")
+  id                    String                 @id @default(uuid())
+  role                  Titles
+  sign_in_email         String                 @unique
+  password              String
+  pass_code             String?
+  exp_date              DateTime?
+  description           String                 @db.LongText
+  permissions           Permission[]
+  user_id               String                 @unique
+  employee              Employees              @relation("Role_Employee", fields: [user_id], references: [id], onDelete: Cascade)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  Products              Products[]             @relation("Added_Product")
+  notification_sent     System_Notifications[] @relation("sending_notification")
+  notification_received System_Notifications[] @relation("receiving_notification")
 }
 
 model Permission {
@@ -213,4 +228,18 @@ model Stock {
   product               Products @relation(fields: [product_id], references: [id], onUpdate: Cascade)
 
   @@unique([store_id, product_id])
+}
+
+model System_Notifications {
+  id          String       @id @default(uuid())
+  sender_id   String
+  receiver_id String
+  content     String
+  type        Notification_Type // Enum to categorize notification types
+  status      Notification_Status @default(PENDING) // Enum for status (e.g., PENDING, SENT, READ)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  sender      Access_Roles @relation("sending_notification", fields: [sender_id], references: [id])
+  receiver    Access_Roles @relation("receiving_notification", fields: [receiver_id], references: [id])
 }

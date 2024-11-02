@@ -9,6 +9,13 @@ const store_stockInstance = new Store_StockController()
 Store_StockRouter.use(verify_token)
 
 
+/* Route for manipulate Stores:
+   USAGE:
+         POST: --> Managers have the licence to add new store inf
+         GET: --> search about products (both employees and managers)
+         PUT: --> employees have the licence to update store inf
+         DELETE: --> employees have the licence to delete store
+         */
 Store_StockRouter.route("/")
                            .post(
                               store_stockInstance.storeEmpAuthorized, store_stockInstance.addStoreInfValid(),
@@ -27,5 +34,21 @@ Store_StockRouter.route("/")
                               store_stockInstance.validationError, store_stockInstance.deleteStoreController
                            )
 
+/* Route for manipulate Stockes:
+   USAGE:
+         POST: --> Employees have the licence to add new or updating existing stock
+         GET: --> search about products (both employees and managers)
+         */
+Store_StockRouter.route("/stock/")
+                                    .post(
+                                       store_stockInstance.stockEmpAuthorized, store_stockInstance.shippingStockValid(),
+                                       store_stockInstance.validationError, store_stockInstance.shippingStockController
+                                    )
+
+
+Store_StockRouter.route("/send-stock/")
+                                       .post(
+                                          
+                                       )
 
 export default Store_StockRouter;
