@@ -8,6 +8,7 @@ import ApiError from './middlewares/errorHandler.js';
 import AuthRouter from './routers/auth.router.js';
 import ProductsRouter from './routers/products.router.js';
 import AccessRoleRouter from './routers/accessroles.router.js';
+import Store_StockRouter from './routers/store_stock.router.js';
 
 dotenv.config()
 
@@ -41,6 +42,9 @@ app.use("/api/permission", AccessRoleRouter)
 
 /* Products Managment Router */
 app.use("/api/prdoucts", ProductsRouter)
+
+/* Stores and Stock Managment Router */
+app.use("/api/store", Store_StockRouter)
 
 app.use("*", ApiError.responseError)
 /* End of server Routers */

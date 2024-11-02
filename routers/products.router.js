@@ -14,7 +14,10 @@ ProductsRouter.use(verify_token)
 
 /* Route for manipulate Products:
    USAGE:
-         POST: --> employees have the licence to add new products 
+         POST: --> employees have the licence to add new products
+         GET: --> search about products (both employees or customers)
+         PUT: --> employees have the licence to update products
+         DELETE: --> employees have the licence to delete products
          */
 ProductsRouter.route("/")
                         .post(

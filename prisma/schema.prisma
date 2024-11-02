@@ -133,8 +133,8 @@ model Stores {
   id         String      @id @default(uuid())
   name       String
   location   String
-  manager_id String      @unique
-  manager    Employees   @relation("Store_Manager", fields: [manager_id], references: [id], onUpdate: Cascade)
+  manager_id String?     @unique
+  manager    Employees?  @relation("Store_Manager", fields: [manager_id], references: [id], onUpdate: Cascade)
   employees  Employees[] @relation("Store_Employees")
   created_at DateTime    @default(now())
   updated_at DateTime    @updatedAt
@@ -157,7 +157,7 @@ model Employees {
   store_id          String?
   store_manager     Stores?             @relation("Store_Manager")
   role              Access_Roles?       @relation("Role_Employee")
-  store_employee    Stores?             @relation("Store_Employees", fields: [store_id], references: [id], onDelete: Cascade)
+  store_employee    Stores?             @relation("Store_Employees", fields: [store_id], references: [id])
   created_at        DateTime            @default(now())
   updated_at        DateTime            @updatedAt
 }
