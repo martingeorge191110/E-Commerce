@@ -1,5 +1,4 @@
-import { body, validationResult, query} from "express-validator";
-import ApiError from "../middlewares/errorHandler.js";
+import { body, query} from "express-validator";
 import AuthUtilies from "./auth.utilies.js";
 import PrismaObject from "../prisma/prisma.js";
 
@@ -181,17 +180,6 @@ class AuthValidator extends AuthUtilies{
             .withMessage('Invalid status value')
          ])
       }
-   /* Function Middleware to chech the request
-      body is valid or catching errors */
-   validationError = (req, res, next) => {
-      const validation = validationResult(req)
-      if (!validation.isEmpty()) {
-         const apiError = ApiError.createError(400, validation.array())
-         return (ApiError.responseError(apiError, req, res, next))
-      }
-      next()
-   }
-
 
 }
 

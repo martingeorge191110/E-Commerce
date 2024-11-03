@@ -141,17 +141,6 @@ class AccessRoleValidator extends AuthUtilies {
          )
       return (next())
    }
-
-   /* Function Middleware to chech the request
-      body is valid or catching errors */
-   validationError = (req, res, next) => {
-      const validation = validationResult(req)
-      if (!validation.isEmpty()) {
-         const apiError = ApiError.createError(400, validation.array())
-         return (ApiError.responseError(apiError, req, res, next))
-      }
-      next()
-   }
 }
 
 export default AccessRoleValidator;
