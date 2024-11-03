@@ -27,7 +27,7 @@ class ApiError extends Error{
 
    /* Function middleware for respond with errors */
    static responseError = (err, req, res, next) => {
-      return (res.status(err.statusCode).json({
+      return (res.status(err.statusCode || 500).json({
          success: false,
          errors: err.errors,
          status: err.status,

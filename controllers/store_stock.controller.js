@@ -56,8 +56,14 @@ class Store_StockController extends Store_StockValidator{
             ...searchCondition,
             include: {
                manager: {
-                  include: {
-                     role: true
+                  select: {
+                     first_name: true, last_name: true, email: true, phone: true, position: true,
+                     hire_date: true, current_rate: true,
+                     role: {
+                        select: {
+                           id: true, role: true, description: true, created_at: true
+                        }
+                     }
                   }
                }, employees: {
                   include: {

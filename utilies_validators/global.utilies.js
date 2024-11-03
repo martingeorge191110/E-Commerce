@@ -1,5 +1,6 @@
 import { validationResult } from 'express-validator'
 import nodemailer from 'nodemailer'
+import ApiError from '../middlewares/errorHandler.js'
 
 /**
  * Response Class

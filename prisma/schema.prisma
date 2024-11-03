@@ -121,7 +121,6 @@ enum Notification_Status {
   READ
 }
 
-
 model Customers {
   id                 String    @id @default(uuid())
   first_name         String
@@ -161,6 +160,7 @@ model Employees {
   email             String              @unique
   phone             String?             @unique
   age               Int
+  avatar            String?
   position          String?
   salary            Float
   hire_date         DateTime            @default(now())
@@ -231,15 +231,15 @@ model Stock {
 }
 
 model System_Notifications {
-  id          String       @id @default(uuid())
+  id          String              @id @default(uuid())
   sender_id   String
   receiver_id String
   content     String
   type        Notification_Type // Enum to categorize notification types
   status      Notification_Status @default(PENDING) // Enum for status (e.g., PENDING, SENT, READ)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
+  created_at  DateTime            @default(now())
+  updated_at  DateTime            @updatedAt
 
-  sender      Access_Roles @relation("sending_notification", fields: [sender_id], references: [id])
-  receiver    Access_Roles @relation("receiving_notification", fields: [receiver_id], references: [id])
+  sender   Access_Roles @relation("sending_notification", fields: [sender_id], references: [id])
+  receiver Access_Roles @relation("receiving_notification", fields: [receiver_id], references: [id])
 }
