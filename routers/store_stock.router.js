@@ -48,7 +48,8 @@ Store_StockRouter.route("/stock/")
 
 Store_StockRouter.route("/send-stock/")
                                        .post(
-                                          
+                                          store_stockInstance.stockEmpAuthorized, store_stockInstance.sendStockValid(),
+                                          store_stockInstance.validationError, store_stockInstance.sendStockController
                                        )
 
 export default Store_StockRouter;

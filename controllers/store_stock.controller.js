@@ -59,6 +59,14 @@ class Store_StockController extends Store_StockValidator{
                   include: {
                      role: true
                   }
+               }, employees: {
+                  include: {
+                     role: {
+                        select: {
+                           id: true, role: true, description: true, created_at: true
+                        }
+                     }
+                  }
                }
             }
          })
@@ -183,7 +191,7 @@ class Store_StockController extends Store_StockValidator{
          stockToAnother = await PrismaObject.stock.findUnique({
             where: {
                store_id_product_id: {
-                  store_id: receiver, product_id
+                  store_id: receiver.id, product_id
                }
             }
          })
@@ -191,7 +199,7 @@ class Store_StockController extends Store_StockValidator{
             stockToAnother = await PrismaObject.stock.update({
                where: {
                   store_id_product_id: {
-                     store_id: store.id, product_id: product.id
+                     store_id: receiver.id, product_id: product_id
                   }
                }, data: {
                   quantity: {
@@ -220,10 +228,17 @@ class Store_StockController extends Store_StockValidator{
                quantity: {decrement: quantity}
             }
          })
+
+         return (this.responseJsonDone(res, 200, "Data has been recorded successfuly!", stockToAnother))
       } catch (err) {
+         console.log(err)
          return (next(ApiError.createError(500, "Server error during sending stock")))
       }
    }
+
+   /**
+    * Controller to search about 
+    */
 }
 
 export default Store_StockController;

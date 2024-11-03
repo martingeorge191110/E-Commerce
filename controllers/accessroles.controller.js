@@ -95,6 +95,60 @@ class AccessRoleController extends AccessRoleValidator {
       return (this.responseJsonDone(res, 200, "Welcome", employee))
    }
 
+   /**
+    * Controller to retrieve account
+    * 
+    * Description:
+    *             [1] --> after token validation, just create find query, then resposne
+    */
+   retrieveAccountController = async (req, res, next) => {
+      const user = req.user
+
+      try {
+         const account = await PrismaObject.access_Roles.findUnique({
+            where: {id: user.id},
+            include: {
+               employee: true,
+               permissions: true,
+               Products: true,
+               notification_received: true,
+               notification_sent: true
+            }
+         })
+
+         return (this.responseJsonDone(res, 200, "Successfuly, Retrieved!", account))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during retreiving your system account!")))
+      }
+   }
+
+   /**
+    * Controller to search about accounts
+    * 
+    * Description:
+    *             [1] -->
+    */
+   searchAccountController = async (req, res, next) => {
+      const query = req.query
+
+      if (req.accounts)
+         return (this.responseJsonDone(res, 200, "Successfuly, Retrieved!", req.accounts))
+
+      try {
+         const accounts = await PrismaObject.access_Roles.findMany({
+            where: query,
+            include: {
+               permissions: {
+                  select: {permission: true}
+               }, employee: true
+            }
+         })
+
+         return (this.responseJsonDone(res, 200, "Successfuly, Retrieved!", accounts))
+      } catch (err) {
+         return (next(ApiError.createError(500, "server error during retrieve specific account")))
+      }
+   }
 }
 
 export default AccessRoleController;

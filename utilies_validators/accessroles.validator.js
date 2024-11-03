@@ -1,4 +1,4 @@
-import { body, validationResult } from "express-validator";
+import { body, query, validationResult } from "express-validator";
 import ApiError from "../middlewares/errorHandler.js";
 import PrismaObject from "../prisma/prisma.js";
 import AuthUtilies from "./auth.utilies.js";
@@ -94,6 +94,32 @@ class AccessRoleValidator extends AuthUtilies {
          body("password")
             .trim()
             .notEmpty().withMessage("this field is required")
+      ])
+   }
+
+   /* Function that return
+      array of express validator to check
+      the validation of account id (in query object) */
+   searchAccountValid = () => {
+      return ([
+         query("account_id")
+            .optional()
+            .isString().withMessage("account_id must be string")
+            .custom( async (value, {req}) => {
+               try {
+                  const accounts = await PrismaObject.access_Roles.findMany({
+                     where: {id: value},
+                     include: {
+                        permissions: {select: 
+                           {permission: true}
+                        }, employee: true
+                     }
+                  })
+                  req.accounts = accounts
+               } catch (err) {
+                  throw (err)
+               }
+            })
       ])
    }
 

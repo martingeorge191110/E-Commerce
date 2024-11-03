@@ -33,6 +33,20 @@ AccessRoleRouter.route("/register")
          )
 
 
+/* USAGE:
+         --> GET: Retrieve user account */
+AccessRoleRouter.route("/")
+                           .get(
+                              accessRoleObj.retrieveAccountController
+                           )
 
+
+/* USAGE:
+         --> GET: search about specific account or any accounts */
+AccessRoleRouter.route("/search/")
+                           .get(
+                              accessRoleObj.searchAccountValid(), accessRoleObj.validationError,
+                              accessRoleObj.searchAccountController
+                           )
 
 export default AccessRoleRouter;
