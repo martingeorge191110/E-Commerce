@@ -12,7 +12,7 @@ Store_StockRouter.use(verify_token)
 /* Route for manipulate Stores:
    USAGE:
          POST: --> Managers have the licence to add new store inf
-         GET: --> search about products (both employees and managers)
+         GET: --> search about Stores information (both employees and managers)
          PUT: --> employees have the licence to update store inf
          DELETE: --> employees have the licence to delete store
          */
@@ -43,6 +43,10 @@ Store_StockRouter.route("/stock/")
                                     .post(
                                        store_stockInstance.stockEmpAuthorized, store_stockInstance.shippingStockValid(),
                                        store_stockInstance.validationError, store_stockInstance.shippingStockController
+                                    )
+                                    .get(
+                                       store_stockInstance.storeStocksInfValid(), store_stockInstance.validationError,
+                                       store_stockInstance.storeStockAuth, store_stockInstance.getAllStoreStocksInf
                                     )
 
 

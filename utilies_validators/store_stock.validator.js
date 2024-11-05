@@ -226,6 +226,52 @@ class Store_StockValidator extends GlobalUtilies {
       ])
    }
 
+   /* Function to validate that,
+      Whether the store id is not empty*/
+   storeStocksInfValid = () => {
+      return ([
+         query("store_id")
+            .trim()
+            .notEmpty().withMessage("store_id is required field")
+            .isString().withMessage("store_id must be string")
+      ])
+   }
+
+   /* Function that validate,
+      Whether the employee has the access on the
+      store info or not */
+   storeStockAuth = async (req, res, next) => {
+      const {store_id} = req.query
+      const user = req.user
+      const accessPermissions = ["VIEW_INVENTORY", "ACCESS_ANALYTICS", "MANAGE_ROLES", "ACCESS_ADMIN_PANEL"]
+      const accessRoles = ["ADMIN", "MANAGER", "DATA_ANALYST"]
+
+      let userInfo
+      try {
+         userInfo = await PrismaObject.access_Roles.findUnique({
+            where: {id: user.id},
+            include: {
+               employee: true, permissions: {
+                  select: { permission: true }
+               }
+            }
+         })
+
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during get user Auth info")))
+      }
+
+      const storeEmployee = userInfo.employee.store_id === store_id
+      const permissionCond = storeEmployee && userInfo.permissions.some((ele) => {
+         return (accessPermissions.includes(ele.permission) ? true : false)
+      })
+
+      if (!accessRoles.includes(userInfo.role) && !permissionCond)
+         return (next(ApiError.createError(403, "You are not authorized to do that!")))
+
+      return (next())
+   }
+
    /* Function that validate the
       authorized Employees to do actions with stores*/
    storeEmpAuthorized = (req, res, next) => {

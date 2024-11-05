@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import ApiError from "../middlewares/errorHandler.js";
 import PrismaObject from "../prisma/prisma.js";
 import Store_StockValidator from "../utilies_validators/store_stock.validator.js";
@@ -243,8 +242,29 @@ class Store_StockController extends Store_StockValidator{
    }
 
    /**
-    * Controller to search about 
+    * Controller to get all sotre stocks infromation
+    * 
+    * Description:
+    *             [1] -->  after validation and auth, perform searching query, then response
     */
+   getAllStoreStocksInf = async (req, res, next) => {
+      const {store_id} = req.query
+
+      try {
+         const storeStocks = await PrismaObject.stock.findMany({
+            where: {
+               store_id
+            },
+            include: {
+               product: true
+            }
+         })
+
+         return (this.responseJsonDone(res, 200, "Store stocks retreived successfuly!", storeStocks))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during get store stock info")))
+      }
+   }
 }
 
 export default Store_StockController;
