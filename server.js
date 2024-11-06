@@ -11,6 +11,7 @@ import AccessRoleRouter from './routers/accessroles.router.js';
 import Store_StockRouter from './routers/store_stock.router.js';
 import EmployeesRouter from './routers/employees.router.js';
 import SysNotifRouter from './routers/sys.notif.router.js';
+import OrdersCustomerRouter from './routers/orders.cust.router.js';
 
 dotenv.config()
 
@@ -53,6 +54,9 @@ app.use("/api/employee", EmployeesRouter)
 
 /* Stores and Stock Managment Router */
 app.use("/api/sys-notif", SysNotifRouter)
+
+/* Customer make order Managment Router */
+app.use("/api/order/customer", OrdersCustomerRouter)
 
 app.use("*", ApiError.responseError)
 /* End of server Routers */

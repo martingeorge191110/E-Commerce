@@ -7,120 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Titles {
-  ADMIN // Admin users with full access
-  MANAGER // Managers overseeing operations
-  AUTHOR // Content creators or product authors
-  CUSTOMER_SERVICE // Customer service representatives
-  INVENTORY_MANAGER // Responsible for managing inventory
-  MARKETING_SPECIALIST // Focused on marketing strategies and campaigns
-  SALES_REPRESENTATIVE // Sales personnel interacting with customers
-  DATA_ANALYST // Analyzing sales and user data
-  DEVELOPER // Developers maintaining the website and system
-  PRODUCT_MANAGER // Managers responsible for product strategy
-  SHIPPING_MANAGER // Responsible for shipping and logistics
-  HR_MANAGER // Human resources personnel
-  ACCOUNTANT // Managing financial records
-  TECH_SUPPORT // Technical support for users and staff
-  CONTENT_EDITOR // Editors reviewing and publishing content
-  QUALITY_ASSURANCE // Ensuring product quality and compliance
-}
-
-enum Role_Permision {
-  CREATE_USER // Permission to create a new user
-  EDIT_USER // Permission to edit existing user information
-  DELETE_USER // Permission to delete a user
-  VIEW_USER // Permission to view user profiles
-  CREATE_PRODUCT // Permission to add new products
-  EDIT_PRODUCT // Permission to update existing product details
-  DELETE_PRODUCT // Permission to remove a product from the catalog
-  VIEW_PRODUCT // Permission to view product details
-  MANAGE_INVENTORY // Permission to manage inventory levels
-  VIEW_INVENTORY // Permission to view inventory reports
-  PROCESS_ORDER // Permission to manage and process customer orders
-  VIEW_ORDER // Permission to view order details and history
-  HANDLE_PAYMENT // Permission to manage payment processing
-  VIEW_PAYMENT_HISTORY // Permission to view payment transaction history
-  MANAGE_SHIPPING // Permission to manage shipping options and logistics
-  TRACK_ORDER // Permission to track the status of orders
-  VIEW_REPORTS // Permission to view sales and performance reports
-  GENERATE_REPORTS // Permission to create new reports
-  MANAGE_DISCOUNTS // Permission to create and manage discount codes
-  VIEW_PROMOTIONS // Permission to view promotional activities
-  MANAGE_SETTINGS // Permission to change application settings and configurations
-  ACCESS_ANALYTICS // Permission to access user engagement and sales analytics
-  SEND_NOTIFICATIONS // Permission to send notifications to users
-  MANAGE_ROLES // Permission to manage user roles and permissions
-  ACCESS_ADMIN_PANEL // Permission to access administrative features and dashboards
-}
-
-enum Employement_Types {
-  FULLTIME
-  PARTTIME
-  CONTRACT
-  INTERN
-}
-
-enum Employment_Statuses {
-  ACTRIVE
-  ONLEAVE
-  TERMINATED
-}
-
-enum Categories {
-  ELECTRONICS // e.g., phones, computers, cameras
-  FASHION // e.g., clothing, accessories
-  HOME_AND_KITCHEN // e.g., furniture, appliances, kitchenware
-  SPORTS_AND_OUTDOORS // e.g., fitness equipment, camping gear
-  BEAUTY_AND_HEALTH // e.g., skincare, supplements, fitness products
-  TOYS_AND_GAMES // e.g., children’s toys, video games
-  AUTOMOTIVE // e.g., car accessories, tools
-  BOOKS // e.g., novels, textbooks
-  GROCERIES // e.g., food, beverages
-  PET_SUPPLIES // e.g., pet food, toys, grooming supplies
-  OFFICE_SUPPLIES // e.g., stationery, office furniture
-  MUSIC_AND_INSTRUMENTS // e.g., instruments, music accessories
-  JEWELRY // e.g., rings, necklaces, watches
-  GARDEN_AND_OUTDOOR // e.g., gardening tools, outdoor furniture
-}
-
-enum Companies {
-  APPLE // Electronics
-  NIKE // Fashion
-  SAMSUNG // Electronics, Fashion
-  IKEA // Home and Kitchen
-  ADIDAS // Fashion, Sports and Outdoors
-  WHIRLPOOL // Home and Kitchen
-  HASBRO // Toys and Games
-  MATTEL // Toys and Games
-  PETCO // Pet Supplies
-  GNC // Beauty and Health
-  AMAZON // Electronics, Fashion, Home and Kitchen, Books, Groceries
-  COSTCO // Groceries, Home and Kitchen
-  WALMART // Electronics, Fashion, Home and Kitchen, Groceries
-  OFFICE_DEPOT // Office Supplies
-  STAPLES // Office Supplies
-  ZARA // Fashion
-  SONY // Electronics, Music and Instruments
-  FENDER // Music and Instruments
-  BOSTON_ACCENT // Music and Instruments
-  BLACK_AND_DECKER // Automotive, Home and Kitchen
-  HUNTER // Sports and Outdoors
-  BOSCH // Automotive, Home and Kitchen
-}
-
-enum Notification_Type {
-  MESSAGE
-  ALERT
-  REMINDER
-}
-
-enum Notification_Status {
-  PENDING
-  SENT
-  READ
-}
-
 model Customers {
   id                 String    @id @default(uuid())
   first_name         String
@@ -139,6 +25,39 @@ model Customers {
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
   profile_completed  Boolean   @default(dbgenerated("(false)"))
+  orders             Orders[]
+}
+
+model Orders {
+  id             String        @id @default(uuid())
+  customer_id    String
+  delivery_id    String?
+  store_id       String?
+  type           OrderType     @default(DELIVERY)
+  status         OrderStatus   @default(PENDING)
+  payment_method PaymentMethod @default(CASH)
+  paid           Boolean?      @default(false)
+  address        String?
+  total_price    Float
+  created_at     DateTime      @default(now()) @db.DateTime(3)
+  updated_at     DateTime      @updatedAt @db.DateTime(3)
+
+  delivery   Employees?   @relation(fields: [delivery_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  customer   Customers    @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  store      Stores?      @relation(fields: [store_id], references: [id], onDelete: SetNull)
+  orderItems OrderItems[]
+}
+
+model OrderItems {
+  order_id String
+  item_id  String
+  quantity Int
+  price    Float
+
+  order   Orders   @relation(fields: [order_id], references: [id], onUpdate: Cascade)
+  product Products @relation(fields: [item_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([order_id, item_id], name: "Order_Items_order_id_item_id_key")
 }
 
 model Stores {
@@ -146,11 +65,12 @@ model Stores {
   name       String
   location   String
   manager_id String?     @unique
-  manager    Employees?  @relation("Store_Manager", fields: [manager_id], references: [id], onUpdate: Cascade)
-  employees  Employees[] @relation("Store_Employees")
   created_at DateTime    @default(now())
   updated_at DateTime    @updatedAt
+  employees  Employees[] @relation("Store_Employees")
   stock      Stock[]
+  manager    Employees?  @relation("Store_Manager", fields: [manager_id], references: [id])
+  orders     Orders[]
 }
 
 model Employees {
@@ -159,38 +79,41 @@ model Employees {
   last_name         String
   email             String              @unique
   phone             String?             @unique
-  age               Int
-  avatar            String?
   position          String?
-  salary            Float
   hire_date         DateTime            @default(now())
-  employment_type   Employement_Types
-  employment_status Employment_Statuses
-  current_rate      Float               @default(0)
   store_id          String?
-  store_manager     Stores?             @relation("Store_Manager")
-  role              Access_Roles?       @relation("Role_Employee")
-  store_employee    Stores?             @relation("Store_Employees", fields: [store_id], references: [id])
   created_at        DateTime            @default(now())
   updated_at        DateTime            @updatedAt
+  age               Int
+  current_rate      Float               @default(0)
+  employment_status Employment_Statuses
+  employment_type   Employement_Types
+  salary            Float
+  avatar            String?
+  role              Access_Roles?       @relation("Role_Employee")
+  store_employee    Stores?             @relation("Store_Employees", fields: [store_id], references: [id])
+  store_manager     Stores?             @relation("Store_Manager")
+  delivery          Orders[]
+
+  @@index([store_id], map: "Employees_store_id_fkey")
 }
 
 model Access_Roles {
   id                    String                 @id @default(uuid())
   role                  Titles
-  sign_in_email         String                 @unique
-  password              String
-  pass_code             String?
-  exp_date              DateTime?
   description           String                 @db.LongText
-  permissions           Permission[]
   user_id               String                 @unique
-  employee              Employees              @relation("Role_Employee", fields: [user_id], references: [id], onDelete: Cascade)
   created_at            DateTime               @default(now())
   updated_at            DateTime               @updatedAt
+  password              String
+  sign_in_email         String                 @unique
+  exp_date              DateTime?
+  pass_code             String?
+  employee              Employees              @relation("Role_Employee", fields: [user_id], references: [id], onDelete: Cascade)
+  permissions           Permission[]
   Products              Products[]             @relation("Added_Product")
-  notification_sent     System_Notifications[] @relation("sending_notification")
   notification_received System_Notifications[] @relation("receiving_notification")
+  notification_sent     System_Notifications[] @relation("sending_notification")
 }
 
 model Permission {
@@ -209,23 +132,26 @@ model Products {
   company       Companies
   quantity      Int
   price         Float
-  cost_per_unit Float
   all_cost      Float
+  cost_per_unit Float
   is_available  Boolean      @default(dbgenerated("(true)"))
   shipped_date  DateTime     @default(now())
   updated_at    DateTime     @updatedAt
   employee_id   String
   employee      Access_Roles @relation("Added_Product", fields: [employee_id], references: [id])
   Stock         Stock[]
+  OrderItems    OrderItems[]
+
+  @@index([employee_id], map: "Products_employee_id_fkey")
 }
 
 model Stock {
-  store_id              String
-  product_id            String
   quantity              Int
+  product_id            String
   shipped_to_store_date DateTime @default(now())
-  store                 Stores   @relation(fields: [store_id], references: [id], onUpdate: Cascade)
-  product               Products @relation(fields: [product_id], references: [id], onUpdate: Cascade)
+  store_id              String
+  product               Products @relation(fields: [product_id], references: [id])
+  store                 Stores   @relation(fields: [store_id], references: [id])
 
   @@unique([store_id, product_id])
 }
@@ -235,11 +161,143 @@ model System_Notifications {
   sender_id   String
   receiver_id String
   content     String
-  type        Notification_Type // Enum to categorize notification types
-  status      Notification_Status @default(PENDING) // Enum for status (e.g., PENDING, SENT, READ)
   created_at  DateTime            @default(now())
+  status      Notification_Status @default(PENDING)
+  type        Notification_Type
   updated_at  DateTime            @updatedAt
+  receiver    Access_Roles        @relation("receiving_notification", fields: [receiver_id], references: [id])
+  sender      Access_Roles        @relation("sending_notification", fields: [sender_id], references: [id])
 
-  sender   Access_Roles @relation("sending_notification", fields: [sender_id], references: [id])
-  receiver Access_Roles @relation("receiving_notification", fields: [receiver_id], references: [id])
+  @@index([receiver_id], map: "System_Notifications_receiver_id_fkey")
+  @@index([sender_id], map: "System_Notifications_sender_id_fkey")
+}
+
+enum Titles {
+  ADMIN
+  MANAGER
+  AUTHOR
+  CUSTOMER_SERVICE
+  INVENTORY_MANAGER
+  MARKETING_SPECIALIST
+  SALES_REPRESENTATIVE
+  DATA_ANALYST
+  DEVELOPER
+  PRODUCT_MANAGER
+  SHIPPING_MANAGER
+  HR_MANAGER
+  ACCOUNTANT
+  TECH_SUPPORT
+  CONTENT_EDITOR
+  QUALITY_ASSURANCE
+}
+
+enum Role_Permision {
+  CREATE_USER
+  EDIT_USER
+  DELETE_USER
+  VIEW_USER
+  CREATE_PRODUCT
+  EDIT_PRODUCT
+  DELETE_PRODUCT
+  VIEW_PRODUCT
+  MANAGE_INVENTORY
+  VIEW_INVENTORY
+  PROCESS_ORDER
+  VIEW_ORDER
+  HANDLE_PAYMENT
+  VIEW_PAYMENT_HISTORY
+  MANAGE_SHIPPING
+  TRACK_ORDER
+  VIEW_REPORTS
+  GENERATE_REPORTS
+  MANAGE_DISCOUNTS
+  VIEW_PROMOTIONS
+  MANAGE_SETTINGS
+  ACCESS_ANALYTICS
+  SEND_NOTIFICATIONS
+  MANAGE_ROLES
+  ACCESS_ADMIN_PANEL
+}
+
+enum Employement_Types {
+  FULLTIME
+  PARTTIME
+  CONTRACT
+  INTERN
+}
+
+enum Employment_Statuses {
+  ACTRIVE
+  ONLEAVE
+  TERMINATED
+}
+
+enum Categories {
+  ELECTRONICS
+  FASHION
+  HOME_AND_KITCHEN
+  SPORTS_AND_OUTDOORS
+  BEAUTY_AND_HEALTH
+  TOYS_AND_GAMES
+  AUTOMOTIVE
+  BOOKS
+  GROCERIES
+  PET_SUPPLIES
+  OFFICE_SUPPLIES
+  MUSIC_AND_INSTRUMENTS
+  JEWELRY
+  GARDEN_AND_OUTDOOR
+}
+
+enum Companies {
+  APPLE
+  NIKE
+  SAMSUNG
+  IKEA
+  ADIDAS
+  WHIRLPOOL
+  HASBRO
+  MATTEL
+  PETCO
+  GNC
+  AMAZON
+  COSTCO
+  WALMART
+  OFFICE_DEPOT
+  STAPLES
+  ZARA
+  SONY
+  FENDER
+  BOSTON_ACCENT
+  BLACK_AND_DECKER
+  HUNTER
+  BOSCH
+}
+
+enum Notification_Type {
+  MESSAGE
+  ALERT
+  REMINDER
+}
+
+enum Notification_Status {
+  PENDING
+  SENT
+  READ
+}
+
+enum OrderType {
+  STORE
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING
+  CANCELED
+  RECEIVED
+}
+
+enum PaymentMethod {
+  CARD
+  CASH
 }
