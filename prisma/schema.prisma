@@ -69,7 +69,7 @@ model Stores {
   updated_at DateTime    @updatedAt
   employees  Employees[] @relation("Store_Employees")
   stock      Stock[]
-  manager    Employees?  @relation("Store_Manager", fields: [manager_id], references: [id])
+  manager    Employees?  @relation("Store_Manager", fields: [manager_id], references: [id], onDelete: SetNull)
   orders     Orders[]
 }
 
@@ -227,7 +227,7 @@ enum Employement_Types {
 }
 
 enum Employment_Statuses {
-  ACTRIVE
+  ACTIVE
   ONLEAVE
   TERMINATED
 }

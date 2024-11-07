@@ -27,7 +27,7 @@ Store_StockRouter.route("/")
                            )
                            .put(
                               store_stockInstance.storeEmpAuthorized, store_stockInstance.updateStoreInfValid(),
-                              store_stockInstance.updateStoreInfController
+                              store_stockInstance.validationError, store_stockInstance.updateStoreInfController
                            )
                            .delete(
                               store_stockInstance.storeEmpAuthorized, store_stockInstance.deleteStoreIdValid(),

@@ -26,41 +26,51 @@ class OrdersCustomerController extends OrdersCustomerValidator {
          return ( acc + Number(curr.price))
       }, 0)
 
+
       try {
          const order = await PrismaObject.orders.create({
             data: {
                customer_id: user.id,
                address: address,
                total_price,
-               items: {
-                  create: products_from_db.map((ele) => ({
-                     item_id: ele.id, quantity: products.quantity,
-                     price: products.quantity * ele.price,
-                  }))
+               orderItems: {
+                  create: products_from_db.map((ele) => {
+                     const findProduct = products.find((elem) => elem.id === ele.id)
+                     console.log(ele, findProduct)
+                     return ({
+                     item_id: ele.id, quantity: findProduct.quantity,
+                     price: findProduct.quantity * ele.price,
+                  })})
                },
                ...query
+            },
+            include: {
+               orderItems: {
+                  include: {
+                     product: true
+                  }
+               }
             }
          })
 
-         let currentProductQuantity;
-         await PrismaObject.products.updateMany({
-            where: {
-               id: {
-                  in: products.map((ele) => {
-                     currentProductQuantity = ele.quantity
-                     return (ele.id)
-                  })
-               }
-            },
-            data: products.map(p => ({
-               quantity: {
-                  decrement: p.quantity
-               }
-            }))
-         })
+         const productUpdates = products.map((ele) => {
+            return PrismaObject.products.update({
+               where: {
+                  id: ele.id,
+               },
+               data: {
+                  quantity: {
+                     decrement: ele.quantity
+                  },
+               },
+            });
+         });
+
+         await PrismaObject.$transaction(productUpdates);
 
          return (this.responseJsonDone(res, 201, "Order has been created, will contact to you soon!", order))
       } catch (err) {
+         console.log(err)
          return (next(ApiError.createError(500, "Server error during creating order contains more than product!")))
       }
    }
