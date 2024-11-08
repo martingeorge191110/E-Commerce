@@ -62,6 +62,99 @@ class OrdersCustomerValidator extends GlobalUtilies {
       })
       ])
    }
+
+   /* Function to validate
+      order id from the query object */
+   orderIdValid = () => {
+      return ([
+         query("order_id")
+            .trim()
+            .notEmpty().withMessage("order_id feild is required in query object")
+            .isString().withMessage("must be astring")
+            .custom( async (value, {req}) => {
+               try {
+                  const order = await PrismaObject.orders.findUnique({
+                     where: {
+                        id: value,
+                        customer_id: req.user.id,
+                     }, include: {
+                        orderItems: {
+                           include: {
+                              product: true
+                           }
+                        }
+                     }
+                  })
+
+                  if (!order)
+                     throw (new Error("this order id is not valid, we dont have any records"))
+
+                  req.order = order
+                  return (true)
+               } catch (err) {
+                  throw (err)
+               }
+            })
+      ])
+   }
+
+   /* Function to validate
+   big order information
+   (whether remove items or update order info) */
+   updateBigOrderValid = () => {
+      const bodyFields = ["address", "payment_method", "type"]
+      return ([
+         ...this.orderIdValid(),
+         body("products")
+            .optional()
+            .isArray().withMessage("this field must be an array")
+            .custom( async (value, {req}) => {
+               const arrayOfItemsIds = req.order.orderItems.map((item) => item.item_id)
+               const newItems = value.filter((ele) => !arrayOfItemsIds.includes(ele.id))
+               const updatedItems = value.filter((ele) => arrayOfItemsIds.includes(ele.id))
+               req.new_items = newItems
+               req.update_items = updatedItems
+
+               try {
+                  let all_items_ids = [...newItems.map((ele) => ele.id), ...arrayOfItemsIds]
+
+                  if (all_items_ids.length > 0) {
+                     const products = await PrismaObject.products.findMany({
+                        where: {
+                           id: { in: all_items_ids},
+                     }})
+
+                     if (!products || products.length === 0)
+                        throw (new Error("products not found in our records"))
+
+                     const allItems = [...updatedItems, ...newItems]
+                     for (const i of products) {
+                        const current = allItems.find((e) => e.id === i.id)
+                        if (current && current.quantity > i.quantity) {
+                           throw (new Error(`${i.name} just ${i.quantity} in the stock!`))
+                        }
+                     }
+                     req.products_db = products
+                     req.all_items_ids = all_items_ids
+                  }
+                  return (true)
+               } catch (err) {
+                  throw (err)
+               }
+            }),
+         ...bodyFields.map((feild) => {
+            return (
+               body(feild)
+                  .optional()
+                  .isString().withMessage("address field must be string")
+                  .custom((value, {req}) => {
+                     req.new_body = req.new_body ? {...req.new_body, [`${feild}`]: value}: {[`${feild}`]: value}
+                     return (true)
+                  })
+            )
+         })
+      ])
+   }
 }
 
 

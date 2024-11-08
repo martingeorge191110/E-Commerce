@@ -21,11 +21,20 @@ OrdersCustomerRouter.route("/")
  * 
  * USAGE: By Customers
  *       POST --> Creating big orders
+ *       PATCH  --> Cancel the order
  */
 OrdersCustomerRouter.route("/big-orders/")
                            .post(
                               ordersInstance.createBigOrderValid(), ordersInstance.validationError,
                               ordersInstance.createBigOrderController
+                           )
+                           .patch(
+                              ordersInstance.orderIdValid(), ordersInstance.validationError,
+                              ordersInstance.cancelBiogOrderController
+                           )
+                           .put(
+                              ordersInstance.updateBigOrderValid(), ordersInstance.validationError,
+                              ordersInstance.updateBigOrderController
                            )
 
 
