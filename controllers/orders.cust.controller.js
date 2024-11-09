@@ -205,6 +205,202 @@ class OrdersCustomerController extends OrdersCustomerValidator {
          return (next(ApiError.createError(500, "Server error during update order information!")))
       }
    }
+
+   /**
+    * Controller to create tradition orders (1 product not a CUART)
+    * 
+    * Description:
+    *             [1] --> after validation and auth, create the new order with requirements
+    *             [2] --> update product quantity in data base, then response with the order details
+    */
+   createOrderController = async (req, res, next) => {
+      const body = req.new_body
+      const user = req.user
+      const product = req.product
+
+      try {
+         const order = await PrismaObject.orders.create({
+            data: {
+               customer_id: user.id,
+               orderItems: {
+                  create: {
+                     item_id: product.product.id,
+                     quantity: product.customer_order.quantity,
+                     price: product.customer_order.quantity * product.product.price
+                  }
+               },
+               total_price: product.customer_order.quantity * product.product.price,
+               ...body
+            },
+            include: {
+               orderItems: {
+                  include: {
+                     product: {
+                        select: {id: true, name: true, description: true, price: true, company: true, category: true}
+                     }
+                  }
+               }
+            }
+         })
+
+         await PrismaObject.products.update({
+            where: {id: product.product.id},
+            data: {
+               quantity: {
+                  decrement: product.customer_order.quantity
+               }
+            }
+         })
+
+         return (this.responseJsonDone(res, 201, `We received the Order whcih is ${product.product.name}`, order))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during creating a new order!")))
+      }
+   }
+
+   /**
+    * Controller to cancele the tradition order
+    * 
+    * Description:
+    *             [1] --> after validation and auth, cancel order
+    *             [2] --> retreive product to the records, then response
+    */
+   cancelOrderController = async (req, res, next) => {
+      const order = req.order
+
+      try {
+         const canceleOrder = await PrismaObject.orders.update({
+            where: {id: order.id},
+            data: {
+               status: "CANCELED"
+            }
+         })
+
+         await PrismaObject.products.update({
+            where: {
+               id: order.orderItems[0].product.id
+            }, data: {
+               quantity: {
+                  increment: order.orderItems[0].quantity
+               }
+            }
+         })
+
+         return (this.responseJsonDone(res, 200, "Order has been canceled, you cannot update id again!", canceleOrder))
+      } catch (err) {
+         console.log(err)
+         return (next(ApiError.createError(500, "Server error during canceling the order!")))
+      }
+   }
+
+   /**
+    * Controller to update tradition order info
+    * 
+    * Description:
+    *             [1] --> 
+    */
+   updateOrderController = async (req, res, next) => {
+      const body = req.new_body
+      const quantity = req.quantity
+      const order = req.order
+      const orderItems = req.order.orderItems[0]
+      const total_quantity = quantity + orderItems.quantity
+      let total_price = null;
+      if (quantity && quantity < 0)
+         total_price =  (orderItems.price / orderItems.quantity) * total_quantity
+      else if (quantity && quantity > 0)
+         total_price = orderItems.product.price * total_quantity
+
+      const update_data = {}
+
+      if (total_price) {
+         update_data.total_price = total_price
+         update_data.orderItems = {
+            update: {
+               where: {
+                  Order_Items_order_id_item_id_key: {
+                     order_id: order.id, item_id: orderItems.item_id
+                  }
+               },
+               data: {
+                  quantity: {
+                     increment: quantity,
+                  },
+                  price: total_price
+               }
+            }
+         }
+      }
+      try {
+         const updateOrder = await PrismaObject.orders.update({
+            where: {id: order.id},
+            data: {
+               ...update_data,
+               ...body
+            },
+            include: {
+               orderItems: {
+                  include: {
+                     product: {
+                        select: {id: true, name: true, description: true, price: true, company: true, category: true}
+                     }
+                  }
+               }
+            }
+         })
+
+         if (total_price && quantity)
+            await PrismaObject.products.update({
+               where: {id: orderItems.product.id},
+               data: {quantity: {
+                  decrement: quantity
+               }}
+            })
+
+         return (this.responseJsonDone(res, 200, "Order data has been updated and recorded!", updateOrder))
+      } catch (err) {
+         console.log(err)
+         return (next(ApiError.createError(500, "Server error during updating the order info!")))
+      }
+   }
+
+   /**
+    * Controller to get customer orders
+    * 
+    * Description:
+    *             [1] --> after validation and auth, retreive the order if query include the id
+    *             [2] --> if no query exists, retreive all customer order details
+    */
+   getOrdersController = async (req, res, next) => {
+      const user = req.user
+      const order = req.order
+
+      if (order)
+         return (this.responseJsonDone(res, 200, "Order details is retreived!", order))
+
+      try {
+         const orders = await PrismaObject.orders.findMany({
+            where: {
+               customer_id: user.id
+            },
+            include: {
+               orderItems: {
+                  include: {
+                     product: {
+                        select: {
+                           id: true, name: true
+                        }
+                     }
+                  }
+               }
+            }
+         })
+
+         return (this.responseJsonDone(res, 200, "all orders has been retreived", orders))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during searching about orders!")))
+      }
+   }
 }
 
 export default OrdersCustomerController;

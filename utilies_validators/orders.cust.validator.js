@@ -89,6 +89,9 @@ class OrdersCustomerValidator extends GlobalUtilies {
                   if (!order)
                      throw (new Error("this order id is not valid, we dont have any records"))
 
+                  if (order.status === "CANCELED")
+                     throw (new Error("Canceled orders cannot be updated!"))
+
                   req.order = order
                   return (true)
                } catch (err) {
@@ -153,6 +156,115 @@ class OrdersCustomerValidator extends GlobalUtilies {
                   })
             )
          })
+      ])
+   }
+
+   /* Function to validate tradition
+      orders with one products
+      Validate: () */
+   createOrderValid = () => {
+      const queryFeilds = ["type", "payment_method", "address"]
+      return ([
+         body("product")
+            .notEmpty().withMessage("This field info is required!")
+            .isObject().withMessage("this field must be an object includes product inf!")
+            .custom( async (value, {req}) => {
+               try {
+                  const product = await PrismaObject.products.findUnique({
+                     where: {id: value.id}
+                  })
+
+                  if (product.quantity < value.quantity)
+                     throw (new Error(`just ${product.quantity} from ${product.name}`))
+
+                  req.product = {
+                     product: product, customer_order: value
+                  }
+                  return (true)
+               } catch (err) {
+                  throw (err)
+               }
+            }),
+         ...queryFeilds.map((feild) => {
+            return (
+               body(feild)
+                  .optional()
+                  .custom((value, {req}) => {
+                     req.new_body = req.new_body ? {...req.new_body, [`${feild}`]: value} : {[`${feild}`]: value}
+                     return (true)
+                  })
+            )
+         })
+      ])
+   }
+
+   /* Function to validate the order info */
+   updateOderValid = () => {
+      const bodyFields = ["address", "payment_method", "type"]
+      return ([
+         ...this.orderIdValid(),
+         body("quantity")
+            .optional()
+            .isNumeric().withMessage("quantity feild must be a numeric Type!")
+            .custom((value, {req}) => {
+               const product = req.order.orderItems
+
+               if (value + product[0].quantity <= 0)
+                  throw (new Error("If you want to retreive all items, please cancel whole order!"))
+   
+               if (value + product[0].quantity > product[0].product.quantity)
+                  throw (new Error(`cannot add any items, we just have ${product[0].product.quantity}`))
+   
+               req.quantity = value
+               return (true)
+            }),
+         ...bodyFields.map((feild) => {
+            return (
+               body(feild)
+                  .optional()
+                  .custom((value, {req}) => {
+                     req.new_body = req.new_body ? {...req.new_body, [`${feild}`]: value}: {[`${feild}`]: value}
+                     return (true)
+                  })
+            )
+         })
+      ])
+   }
+
+   /* Function to validate retreiving orders
+      For the customer in case of sending orderid, or no */
+   getOrdersValid = () => {
+      return ([
+         query("order_id")
+            .optional()
+            .isString().withMessage("order_id must be include in query object")
+            .custom( async (val, {req}) => {
+               try {
+                  const order = await PrismaObject.orders.findUnique({
+                     where: {
+                        id: val, customer_id: req.user.id
+                     },
+                     include: {
+                        orderItems: {
+                           include: {
+                              product: {
+                                 select: {
+                                    id: true, name: true, description: true, price: true, company: true, category: true
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  })
+                  if (!order)
+                     throw (new Error("Order not found with this id!"))
+
+                  req.order = order
+                  return (true)
+               } catch (err) {
+                  throw (err)
+               }
+            })
       ])
    }
 }
