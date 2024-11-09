@@ -61,5 +61,12 @@ OrdersCustomerRouter.route("/big-orders/")
                            )
 
 
+/* This route for creating new stripe session */
+OrdersCustomerRouter.route("/pay/")
+                                 .post(
+                                    ordersInstance.orderIdValid(), ordersInstance.validationError,
+                                    ordersInstance.newStripeSessionController
+                                 )
+
 
 export default OrdersCustomerRouter;

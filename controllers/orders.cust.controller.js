@@ -1,6 +1,7 @@
 import ApiError from "../middlewares/errorHandler.js";
 import PrismaObject from "../prisma/prisma.js";
 import OrdersCustomerValidator from "../utilies_validators/orders.cust.validator.js";
+import create_stripe_session from "../utilies_validators/stripe.utilies.js";
 
 
 
@@ -399,6 +400,28 @@ class OrdersCustomerController extends OrdersCustomerValidator {
          return (this.responseJsonDone(res, 200, "all orders has been retreived", orders))
       } catch (err) {
          return (next(ApiError.createError(500, "Server error during searching about orders!")))
+      }
+   }
+
+   /**
+    * Controller to request stripe session
+    * 
+    * Description:
+    *             [1] --> after validation and auth
+    */
+   newStripeSessionController = async (req, res, next) => {
+      const order = req.order
+
+      if (order.paid)
+         return (next(ApiError.createError(400, "You paid already!")))
+
+      try {
+         const stripe_url = await create_stripe_session(req, order.id)
+
+         return (this.responseJsonDone(res, 201, "new payment session created!", stripe_url))
+      } catch (err) {
+         console.log(err)
+         return (next(ApiError.createError(500, "Server error during request new payment session")))
       }
    }
 }
