@@ -28,6 +28,10 @@ app.use(
          ,credentials: true
       })
 );
+
+/* Customer make order Managment Router */
+app.use("/api/order/customer", OrdersCustomerRouter)
+
 app.use(express.json({limit: '5gb'}))
 app.use(express.urlencoded({
    limit: '5gb',
@@ -55,8 +59,6 @@ app.use("/api/employee", EmployeesRouter)
 /* Stores and Stock Managment Router */
 app.use("/api/sys-notif", SysNotifRouter)
 
-/* Customer make order Managment Router */
-app.use("/api/order/customer", OrdersCustomerRouter)
 
 app.use("*", ApiError.responseError)
 /* End of server Routers */

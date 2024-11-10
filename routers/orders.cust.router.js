@@ -7,6 +7,23 @@ import verify_token from '../middlewares/verify.token.js';
 const OrdersCustomerRouter = express.Router()
 const ordersInstance = new OrdersCustomerController()
 
+
+
+/* This route for stripe webhook */
+OrdersCustomerRouter.route("/webhook/")
+   .post(
+      express.raw({ type: "application/json" }),
+      ordersInstance.webHookController
+   );
+
+
+OrdersCustomerRouter.use(express.json({limit: '5gb'}))
+OrdersCustomerRouter.use(express.urlencoded({
+   limit: '5gb',
+   'extended': true
+}))
+
+
 OrdersCustomerRouter.use(verify_token)
 
 

@@ -1,7 +1,12 @@
+import Stripe from "stripe";
 import ApiError from "../middlewares/errorHandler.js";
 import PrismaObject from "../prisma/prisma.js";
 import OrdersCustomerValidator from "../utilies_validators/orders.cust.validator.js";
 import create_stripe_session from "../utilies_validators/stripe.utilies.js";
+import dotenv from 'dotenv'
+import OrderStaticUtilies from "../utilies_validators/order.utilies.js";
+
+dotenv.config()
 
 
 
@@ -298,7 +303,9 @@ class OrdersCustomerController extends OrdersCustomerValidator {
     * Controller to update tradition order info
     * 
     * Description:
-    *             [1] --> 
+    *             [1] --> after validation and auth, get the updated inf, and order info from data base
+    *             [2] --> create the updating object based on whether user provide the new item's info or not
+    *             [3] --> update order info, then response
     */
    updateOrderController = async (req, res, next) => {
       const body = req.new_body
@@ -407,7 +414,7 @@ class OrdersCustomerController extends OrdersCustomerValidator {
     * Controller to request stripe session
     * 
     * Description:
-    *             [1] --> after validation and auth
+    *             [1] --> after validation and auth, creating new stripe session, then response with session url
     */
    newStripeSessionController = async (req, res, next) => {
       const order = req.order
@@ -416,13 +423,46 @@ class OrdersCustomerController extends OrdersCustomerValidator {
          return (next(ApiError.createError(400, "You paid already!")))
 
       try {
-         const stripe_url = await create_stripe_session(req, order.id)
+         const stripe_url = await create_stripe_session(req, order.id, order.customer_id)
 
          return (this.responseJsonDone(res, 201, "new payment session created!", stripe_url))
       } catch (err) {
-         console.log(err)
          return (next(ApiError.createError(500, "Server error during request new payment session")))
       }
+   }
+
+   /**
+    * Controller to listening for the stripe webhook
+    * 
+    * Description:
+    *             [1] --> setup the webhook event
+    *             [2] --> update the order in data base after receiving the amount, then response
+    */
+   webHookController = async (req, res, next) => {
+      const sig = req.headers['stripe-signature'];
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+      let event;
+
+      const webHookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+      try {
+         event = stripe.webhooks.constructEvent(req.body, sig, webHookSecret);
+      } catch (err) {
+         return (next(ApiError.createError(400, 'WebHook Error!')))
+      }
+
+      let responseJson;
+      switch (event.type) {
+         case 'checkout.session.completed':
+            const metadata = event.data.object.metadata
+            const update_order = await OrderStaticUtilies.updatePaidOrders(metadata.order_id, metadata.customer_id)
+            responseJson = update_order
+         break;
+         default:
+            console.log(`Unhandled event type ${event.type}`);
+      }
+      return (res.json({ received: true, ...responseJson}));
    }
 }
 

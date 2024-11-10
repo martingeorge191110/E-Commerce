@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 
 /* Function that create new stripe session */
-const create_stripe_session = async (req, order_id) => {
+const create_stripe_session = async (req, order_id, customer_id) => {
    let orderItems;
    try {
       orderItems = await PrismaObject.orderItems.findMany({
@@ -22,6 +22,7 @@ const create_stripe_session = async (req, order_id) => {
             }, quantity: true, price: true
          }
       })
+
    } catch (err) {
       return (null)
    }
@@ -43,6 +44,7 @@ const create_stripe_session = async (req, order_id) => {
       ],
       metadata: {
          order_id: order_id,
+         customer_id: customer_id,
          payment: true
       },
       mode: 'payment',
