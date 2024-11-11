@@ -12,6 +12,7 @@ import Store_StockRouter from './routers/store_stock.router.js';
 import EmployeesRouter from './routers/employees.router.js';
 import SysNotifRouter from './routers/sys.notif.router.js';
 import OrdersCustomerRouter from './routers/orders.cust.router.js';
+import OrdersEmployeeRouter from './routers/orders.emp.router.js';
 
 dotenv.config()
 
@@ -31,6 +32,8 @@ app.use(
 
 /* Customer make order Managment Router */
 app.use("/api/order/customer", OrdersCustomerRouter)
+
+
 
 app.use(express.json({limit: '5gb'}))
 app.use(express.urlencoded({
@@ -58,6 +61,9 @@ app.use("/api/employee", EmployeesRouter)
 
 /* Stores and Stock Managment Router */
 app.use("/api/sys-notif", SysNotifRouter)
+
+/* Employee manipulating orders Router */
+app.use("/api/order/employee", OrdersEmployeeRouter)
 
 
 app.use("*", ApiError.responseError)
