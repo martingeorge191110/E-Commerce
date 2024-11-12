@@ -20,6 +20,7 @@ class CloudinaryUtilies {
       const avatar = req.file
       if (!avatar) {
          req.noAvatar = true
+         return (next())
       }
 
       try {

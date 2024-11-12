@@ -13,6 +13,7 @@ import EmployeesRouter from './routers/employees.router.js';
 import SysNotifRouter from './routers/sys.notif.router.js';
 import OrdersCustomerRouter from './routers/orders.cust.router.js';
 import OrdersEmployeeRouter from './routers/orders.emp.router.js';
+import UserRouter from './routers/user.router.js';
 
 dotenv.config()
 
@@ -46,6 +47,9 @@ app.use(express.urlencoded({
 
 /* Auth Router for all people using comp web or system */
 app.use("/api/auth", AuthRouter)
+
+/* User route to manipulate his profile */
+app.use("/api/customer", UserRouter)
 
 /* Access Roles Router */
 app.use("/api/permission", AccessRoleRouter)
