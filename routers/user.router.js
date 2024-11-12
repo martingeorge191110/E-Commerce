@@ -33,9 +33,14 @@ UserRouter.route("/avatar/")
 
 
 /* Searching route
-   userid or searching with name, or searching for all*/
-UserRouter.route("/search/")
-                        .get()
+   userid or searching with name, or searching for all
+   NOTE: --> THIS ROUTE AUTHORIZED FROR EMPLOYEES*/
+UserRouter.route("/search/:id")
+                        .get(
+                           userInstance.searchCustomersAuth,
+                           userInstance.searchingCustValid(), userInstance.validationError,
+                           userInstance.searchingCustController
+                        )
 
 
 

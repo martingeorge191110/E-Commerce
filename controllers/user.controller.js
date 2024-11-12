@@ -102,6 +102,41 @@ class UserController extends UserValidator {
          return (next(ApiError.createError(500, "Server error during Retreiving the profile!")))
       }
    }
+
+   /**
+    * Constoller that searching about customers (auth by employees)
+    * 
+    * Description:
+    *             [1] --> after validation and auth, check whether request obj contains the customer info or not
+    *             [2] --> if there is nothing, then search about all customers, then response
+    */
+   searchingCustController = async (req, res, next) => {
+      const customer = req.customer
+
+      if (customer)
+         return (this.responseJsonDone(res, 200, "Customer info retreived successfuly!", customer))
+
+      try {
+         const customers = await PrismaObject.customers.findMany({
+            select: {
+               id: true, first_name: true, second_name: true,
+               email: true, phone: true, avatar: true, created_at: true,
+               _count: {
+                  select: {
+                     orders: true
+                  }
+               }
+            }
+         })
+
+         if (!customers || customers.length < 1)
+            return (next(ApiError.createError(404, "no customers Found!")))
+
+         return (this.responseJsonDone(res, 200, "Customers info retreived successfuly!", customers))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during searching about customers!")))
+      }
+   }
 }
 
 export default UserController;
