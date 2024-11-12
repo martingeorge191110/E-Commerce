@@ -9,12 +9,14 @@ const ordersInstance = new OrdersEmployeeController()
 
 /* This route for delivery emplyees, when sending the order */
 OrdersEmployeeRouter.route("/delivered/")
-                              .post(
+                              .get(
                                  ordersInstance.employeeReceivedValid(), ordersInstance.validationError,
                                  ordersInstance.employeeReceivedController
                               )
 
-// OrdersEmployeeRouter.use(verify_token)
+
+
+OrdersEmployeeRouter.use(verify_token)
 
 
 

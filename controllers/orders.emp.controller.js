@@ -49,7 +49,9 @@ class OrdersEmployeeController extends OrdersEmployeeValidator {
     * Controller to make adjust orders, (adding delivery employee or adjust status, ....)
     * 
     * Description:
-    *             [1] --> 
+    *             [1] --> after validation and auth, get all info will be needed
+    *             [2] --> update the order, (put store and delivery emp) to be responsible for this order
+    *             [3] --> send a mail to the delivery  employee who will be responsible for this, then response
     */
    updateOrderController = async (req, res, next) => {
       const order = req.order
@@ -71,7 +73,7 @@ class OrdersEmployeeController extends OrdersEmployeeValidator {
             }
          })
 
-         const genCode = String(Math.random()).slice(0, 7)
+         const genCode = String(Math.random()).slice(2, 9)
          orders[order.id] = genCode
          await this.sendMail(delivery.email, 'New order request!',
             `
@@ -110,18 +112,33 @@ class OrdersEmployeeController extends OrdersEmployeeValidator {
     * Controller to update order, to be recevied by delivery employee
     * 
     * Description:
-    *             [1] --> 
+    *             [1] --> no auth, just save the code will be sent to the employe, and compare it
+    *             [2] --> after validate the code, update the order to be received and paid, then response
     */
    employeeReceivedController = async (req, res, next) => {
       const order = req.order
       const delivery = req.delivery
       const code = req.code
 
-      console.log(req.query)
-      if (code === orders[order.id])
-         console.log(true)
+      if (code !== orders[order.id])
+         return (next(ApiError.createError(403, "code is not right!")))
 
-      return (this.responseJsonDone(res, 200, "Awd", null))
+      try {
+         const update_order = await PrismaObject.orders.update({
+            where: {
+               id: order.id
+            },
+            data: {
+               status: "RECEIVED",
+               paid: true
+            }
+         })
+
+         delete orders[order.id]
+         return (this.responseJsonDone(res, 200, "Order delivered!", update_order))
+      } catch (err) {
+         return (next(ApiError.createError(500, "Server error during updating order status!")))
+      }
    }
 }
 
