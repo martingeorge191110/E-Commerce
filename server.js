@@ -14,6 +14,7 @@ import SysNotifRouter from './routers/sys.notif.router.js';
 import OrdersCustomerRouter from './routers/orders.cust.router.js';
 import OrdersEmployeeRouter from './routers/orders.emp.router.js';
 import UserRouter from './routers/user.router.js';
+import { init_socket } from './socket.js';
 
 dotenv.config()
 
@@ -77,3 +78,5 @@ const server = http.createServer(app)
                .listen(env.PORT, () => {
                   console.log(`Server is Connected on http://${env.HOSTNAME}:${env.PORT}`)
                })
+
+export const io = init_socket(server)
